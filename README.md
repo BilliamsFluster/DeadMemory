@@ -1,3 +1,3 @@
 # DeadMemory
 
-Developed with Unreal Engine 5
+Dead Memory is an action adventure VR horror game. This game is currently under development
