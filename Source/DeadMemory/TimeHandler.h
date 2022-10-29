@@ -15,7 +15,7 @@ public:
 	// Sets default values for this actor's properties
 	ATimeHandler();
 
-	FTimerHandle DayNightCycleHandle;
+	
 	
 	
 
@@ -23,15 +23,21 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	void DayNightCycle();
+	void DayNightCycle(float DeltaTime);
+	void DayLighting(float DeltaTime);
+	void NightLighting(float DeltaTime);
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 private:
+	
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
-	float CycleTime;
+	float DayTime;
+	
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
+	float NightTime;
 
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
 	FRotator DirectionalLightRotation;
@@ -40,8 +46,12 @@ private:
 	class UDirectionalLightComponent* DirectionalLight;
 	
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
-	TSubclassOf<class USkyAtmosphereComponent> SkyAtmosphere;
+	class USkyAtmosphereComponent* SkyAtmosphere;
 
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
+	class ASkyLight* SkyLight;
+	
+	bool bIsNightTime;
 	
 
 	
