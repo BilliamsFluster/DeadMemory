@@ -32,18 +32,8 @@ void ATimeHandler::DayNightCycle(float DeltaTime)
 	
 	if (DirectionalLight != nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("NightTime is  is %s"), (bIsNightTime ? TEXT("True") : TEXT("False")));
-		if (DirectionalLight->GetComponentRotation().Pitch < 0)
-		{
-			bIsNightTime = false;
-			
-		}
-		else if (DirectionalLight->GetComponentRotation().Pitch > 0)
-		{
-			bIsNightTime = true;
-			
-			
-		}
+		
+		DirectionalLight->GetComponentRotation().Pitch < 0 ? bIsNightTime = false : bIsNightTime = true;
 		if (bIsNightTime)
 		{
 			NightLighting(NightTime * DeltaTime);
@@ -64,6 +54,7 @@ void ATimeHandler::DayNightCycle(float DeltaTime)
 
 void ATimeHandler::DayLighting(float DeltaTime)
 {
+	if (SkyLight == nullptr) return;
 	float DirectionalLightIntensity = DirectionalLight->Intensity;
 	float SkyLightIntensity = SkyLight->GetLightComponent()->Intensity;
 
@@ -73,6 +64,7 @@ void ATimeHandler::DayLighting(float DeltaTime)
 }
 void ATimeHandler::NightLighting(float DeltaTime)
 {
+	if (SkyLight == nullptr) return;
 	float DirectionalLightIntensity = DirectionalLight->Intensity;
 	float SkyLightIntensity = SkyLight->GetLightComponent()->Intensity;
 

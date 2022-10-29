@@ -23,9 +23,9 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	void DayNightCycle(float DeltaTime);
-	void DayLighting(float DeltaTime);
-	void NightLighting(float DeltaTime);
+	void DayNightCycle(float DeltaTime); // function for basic day and night cycle
+	void DayLighting(float DeltaTime); // Function that manipulates day time effects
+	void NightLighting(float DeltaTime); // Function that manipulates night time effects
 
 public:	
 	// Called every frame
@@ -34,16 +34,14 @@ public:
 private:
 	
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
-	float DayTime;
+	float DayTime; // used for time of day
 	
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
-	float NightTime;
+	float NightTime; // used for time of night
+
 
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
-	FRotator DirectionalLightRotation;
-
-	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
-	class UDirectionalLightComponent* DirectionalLight;
+	class UDirectionalLightComponent* DirectionalLight; 
 	
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
 	class USkyAtmosphereComponent* SkyAtmosphere;
@@ -51,7 +49,7 @@ private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
 	class ASkyLight* SkyLight;
 	
-	bool bIsNightTime;
+	bool bIsNightTime; // checks if it is night time
 	
 
 	
