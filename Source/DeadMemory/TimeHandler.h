@@ -15,10 +15,6 @@ public:
 	// Sets default values for this actor's properties
 	ATimeHandler();
 
-	
-	
-	
-
 
 protected:
 	// Called when the game starts or when spawned
@@ -51,6 +47,8 @@ private:
 	
 	bool bIsNightTime; // checks if it is night time
 	
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
+	class AMoon* Moon;
 
 	
 
