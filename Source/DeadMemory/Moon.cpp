@@ -3,6 +3,9 @@
 
 #include "Moon.h"
 #include "Components/StaticMeshComponent.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Components/DirectionalLightComponent.h"
+
 
 // Sets default values
 AMoon::AMoon()
@@ -14,6 +17,11 @@ AMoon::AMoon()
 
 	Glow = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Glow"));
 	Glow->SetupAttachment(Moon);
+
+	MoonLight = CreateDefaultSubobject<UDirectionalLightComponent>(TEXT("MoonLight"));
+	MoonLight->SetupAttachment(Moon);
+
+
 	
 }
 
@@ -21,13 +29,61 @@ AMoon::AMoon()
 void AMoon::BeginPlay()
 {
 	Super::BeginPlay();
+	FOnTimelineFloat UpdateValue;
+	UpdateValue.BindUFunction(this, FName("MoonUpdate"));
+
+	FOnTimelineEvent FinishedEvent;
+	FinishedEvent.BindUFunction(this, FName("MoonFinished"));
+
+	MoonTimeLine.AddInterpFloat(MoonCurve, UpdateValue);
+	MoonTimeLine.AddInterpFloat(MoonLightCurve, UpdateValue);
+	MoonTimeLine.AddInterpFloat(GlowCurve, UpdateValue);
+	MoonTimeLine.SetTimelineFinishedFunc(FinishedEvent);
+
+
 	
+}
+
+void AMoon::MoonNightTransition()
+{
+	MoonTimeLine.Play();
+}
+
+void AMoon::MoonDayTransition()
+{
+	MoonTimeLine.Reverse();
+}
+
+void AMoon::SetMoonRotationAndScale(FVector Origin, float Scale)
+{
+	
+	FVector NormalizedLocation = Origin - GetActorLocation();
+	UKismetMathLibrary::Vector_Normalize(NormalizedLocation);
+	
+	SetActorRotation(NormalizedLocation.Rotation());
+	SetActorScale3D({ Scale,Scale,Scale });
+	
+
+
+
 }
 
 // Called every frame
 void AMoon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	MoonTimeLine.TickTimeline(DeltaTime);
 
+}
+
+void AMoon::MoonUpdate(float Alpha)
+{
+	Moon->SetScalarParameterValueOnMaterials(FName("Opacity"), MoonCurve->GetFloatValue(Alpha));
+	Glow->SetScalarParameterValueOnMaterials(FName("Density"), GlowCurve->GetFloatValue(Alpha));
+	MoonLight->SetIntensity(MoonLightCurve->GetFloatValue(Alpha));
+}
+
+void AMoon::MoonFinished()
+{
 }
 

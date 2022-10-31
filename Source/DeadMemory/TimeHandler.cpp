@@ -8,6 +8,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/SkyLightComponent.h"
 #include "Engine/SkyLight.h"
+#include "Moon.h"
 
 
 // Sets default values
@@ -54,12 +55,14 @@ void ATimeHandler::DayNightCycle(float DeltaTime)
 
 void ATimeHandler::DayLighting(float DeltaTime)
 {
-	if (SkyLight == nullptr) return;
+	if (SkyLight == nullptr ) return;
 	float DirectionalLightIntensity = DirectionalLight->Intensity;
 	float SkyLightIntensity = SkyLight->GetLightComponent()->Intensity;
 
 	DirectionalLight->SetIntensity(UKismetMathLibrary::FInterpTo(DirectionalLightIntensity, 10.0, DeltaTime, 4.0f));
 	SkyLight->GetLightComponent()->SetIntensity(UKismetMathLibrary::FInterpTo(SkyLightIntensity, 1, DeltaTime / 4, 8.0f));
+	if(Moon == nullptr) return
+	Moon->MoonDayTransition();
 
 }
 void ATimeHandler::NightLighting(float DeltaTime)
@@ -70,7 +73,8 @@ void ATimeHandler::NightLighting(float DeltaTime)
 
 	DirectionalLight->SetIntensity(UKismetMathLibrary::FInterpTo(DirectionalLightIntensity,0.1,DeltaTime,3.0f));
 	SkyLight->GetLightComponent()->SetIntensity(UKismetMathLibrary::FInterpTo(SkyLightIntensity, 0.01, DeltaTime / 4, 5.0f));
-
+	if (Moon == nullptr) return
+	Moon->MoonNightTransition();
 	
 }
 
