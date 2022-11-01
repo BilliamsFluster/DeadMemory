@@ -79,7 +79,7 @@ void AMoon::Tick(float DeltaTime)
 void AMoon::MoonUpdate(float Alpha)
 {
 	Moon->SetScalarParameterValueOnMaterials(FName("Opacity"), MoonCurve->GetFloatValue(Alpha));
-	Glow->SetScalarParameterValueOnMaterials(FName("Density"), GlowCurve->GetFloatValue(Alpha));
+	Glow->SetScalarParameterValueOnMaterials(FName("GlowAmount"), GlowCurve->GetFloatValue(Alpha));
 	MoonLight->SetIntensity(MoonLightCurve->GetFloatValue(Alpha));
 }
 
