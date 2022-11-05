@@ -30,12 +30,13 @@ void AMoon::BeginPlay()
 {
 	Super::BeginPlay();
 	FOnTimelineFloat UpdateValue;
-	UpdateValue.BindUFunction(this, FName("MoonUpdate"));
+	UpdateValue.BindUFunction(this, FName("MoonUpdate")); // binding our function to the update of the timeline
 
 	FOnTimelineEvent FinishedEvent;
-	FinishedEvent.BindUFunction(this, FName("MoonFinished"));
+	FinishedEvent.BindUFunction(this, FName("MoonFinished")); // binding the finished function to the timeline
 
-	MoonTimeLine.AddInterpFloat(MoonCurve, UpdateValue);
+	/*Adding the curves to the timeline so it can affect them*/
+	MoonTimeLine.AddInterpFloat(MoonCurve, UpdateValue); 
 	MoonTimeLine.AddInterpFloat(MoonLightCurve, UpdateValue);
 	MoonTimeLine.AddInterpFloat(GlowCurve, UpdateValue);
 	MoonTimeLine.SetTimelineFinishedFunc(FinishedEvent);
@@ -78,6 +79,7 @@ void AMoon::Tick(float DeltaTime)
 
 void AMoon::MoonUpdate(float Alpha)
 {
+	/*When the moon updates we want to update our materials to the curve value*/
 	Moon->SetScalarParameterValueOnMaterials(FName("Opacity"), MoonCurve->GetFloatValue(Alpha));
 	Glow->SetScalarParameterValueOnMaterials(FName("GlowAmount"), GlowCurve->GetFloatValue(Alpha));
 	MoonLight->SetIntensity(MoonLightCurve->GetFloatValue(Alpha));
