@@ -31,18 +31,18 @@ void ATimeHandler::BeginPlay()
 void ATimeHandler::DayNightCycle(float DeltaTime)
 {
 	
-	if (DirectionalLight != nullptr)
+	if (DirectionalLight != nullptr) // Is directional light valid
 	{
 		
-		DirectionalLight->GetComponentRotation().Pitch < 0 ? bIsNightTime = false : bIsNightTime = true;
-		if (bIsNightTime)
+		DirectionalLight->GetComponentRotation().Pitch < 0 ? bIsNightTime = false : bIsNightTime = true; // change the suns rotation
+		if (bIsNightTime) // if night time then adjust properties for night time
 		{
 			NightLighting(NightTime * DeltaTime);
 			FRotator LightRotation = { 0, (NightTime * DeltaTime), 0 };
 			DirectionalLight->AddLocalRotation(LightRotation);
 			
 		}
-		else if (!bIsNightTime)
+		else if (!bIsNightTime) // if day time then adjust properties for night time
 		{
 			DayLighting(DayTime * DeltaTime);
 			FRotator LightRotation = { 0, (DayTime * DeltaTime), 0 };
@@ -57,8 +57,9 @@ void ATimeHandler::DayNightCycle(float DeltaTime)
 
 void ATimeHandler::DayLighting(float DeltaTime)
 {
-	if (SkyLight != nullptr && Moon != nullptr)
-	{
+	if (SkyLight != nullptr && Moon != nullptr) // if the moon and the sky light are valid
+	{ // we want to adjust properties to create a realistic day scene
+		
 		float DirectionalLightIntensity = DirectionalLight->Intensity;
 		float SkyLightIntensity = SkyLight->GetLightComponent()->Intensity;
 
@@ -72,8 +73,10 @@ void ATimeHandler::DayLighting(float DeltaTime)
 }
 void ATimeHandler::NightLighting(float DeltaTime)
 {
-	if (SkyLight != nullptr && Moon != nullptr)
+	if (SkyLight != nullptr && Moon != nullptr)// if the moon and the sky light are valid
 	{
+		
+		//we want to adjust properties to create a realistic night scene
 		float DirectionalLightIntensity = DirectionalLight->Intensity;
 		float SkyLightIntensity = SkyLight->GetLightComponent()->Intensity;
 
