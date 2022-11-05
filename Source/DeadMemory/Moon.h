@@ -34,29 +34,29 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Moon")
-	class UStaticMeshComponent* Moon;
+	class UStaticMeshComponent* Moon; // moon mesh
 
 	UPROPERTY(EditDefaultsOnly, Category = "Moon")
-	class UStaticMeshComponent* Glow;
+	class UStaticMeshComponent* Glow; // glow mesh
 
 	UPROPERTY(EditDefaultsOnly, Category = "Moon")
-	class UDirectionalLightComponent* MoonLight;
+	class UDirectionalLightComponent* MoonLight; // light for teh moon
 
 	UPROPERTY(EditAnywhere, Category = "Curves")
-	class UCurveFloat* MoonCurve;
+	class UCurveFloat* MoonCurve; // curve for moon transparency
 
 	UPROPERTY(EditAnywhere, Category = "Curves")
-	class UCurveFloat* GlowCurve;
+	class UCurveFloat* GlowCurve; // curve to adjust moon glow
 
 	UPROPERTY(EditAnywhere, Category = "Curves")
-	class UCurveFloat* MoonLightCurve;
+	class UCurveFloat* MoonLightCurve; // curve for the light intensity of the moon
 
-	FTimeline MoonTimeLine;
+	FTimeline MoonTimeLine; // create a timeline that will affect the curves
 
 	UFUNCTION()
-	void MoonUpdate(float Alpha);
+	void MoonUpdate(float Alpha); // update function for the Moon timeline
 	UFUNCTION()
-	void MoonFinished();
+	void MoonFinished(); // finished function for the moon timeline
 
 
 
