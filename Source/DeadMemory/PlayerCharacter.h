@@ -16,9 +16,9 @@ public:
 	APlayerCharacter();
 private:
 
-	UPROPERTY(EditAnywhere, Category = "Movement", meta = (AllowPrivateAccess = true));
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = true));
 	float BaseTurnRate;
-	UPROPERTY(EditAnywhere, Category = "Movement", meta = (AllowPrivateAccess = true));
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = true));
 	float BaseLookUpAtRate;
 
 protected:
@@ -30,6 +30,9 @@ protected:
 
 	void TurnAtRate(float AxisValue);
 	void LookUpAtRate(float AxisValue);
+
+	void AddControllerYawInput(float Value);
+	void AddControllerPitchInput(float Value);
 protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Controller");
