@@ -9,6 +9,7 @@
 #include "Components/SkyLightComponent.h"
 #include "Engine/SkyLight.h"
 #include "Moon.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 // Sets default values
@@ -16,7 +17,8 @@ ATimeHandler::ATimeHandler()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	bIsNightTime = false;
+	Time = 0;
+	EDayNightCycle = DayNightCycleEnum::DNC_DayTime;
 
 }
 
@@ -24,36 +26,63 @@ ATimeHandler::ATimeHandler()
 void ATimeHandler::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	TimeOfDay = 0.0f;
+	DirectionalLight->SetWorldRotation(FRotator(0,-180,0));
+	GetWorldTimerManager().SetTimer(Clock, this, &ATimeHandler::ClockUpdate, .001, true); //every thousanth of a sec
 	
 }
-
-void ATimeHandler::DayNightCycle(float DeltaTime)
+void ATimeHandler::ClockUpdate()
 {
+	
+	
 	
 	if (DirectionalLight != nullptr) // Is directional light valid
 	{
-		
-		DirectionalLight->GetComponentRotation().Pitch < 0 ? bIsNightTime = false : bIsNightTime = true; // change the suns rotation
-		if (bIsNightTime) // if night time then adjust properties for night time
+		if (EDayNightCycle == DayNightCycleEnum::DNC_NightTime) // if night time then adjust properties for night time
 		{
-			NightLighting(NightTime * DeltaTime);
-			FRotator LightRotation = { 0, (NightTime * DeltaTime), 0 };
-			DirectionalLight->AddLocalRotation(LightRotation);
-			
+
+
+
+			Time += 1;
+			TimeOfDay = UKismetMathLibrary::MapRangeClamped(Time, 0, (NightSpeed * 1000), 12, 24); // if reaches the max amount of seconds time of day will be 1am
+			SunRotation = UKismetMathLibrary::MapRangeClamped(TimeOfDay, 12, 24, -180, -360); // get value of time of day and if it is 24 then the sun orientation will change to be rotating to 360 deg
+			NightLighting(Time); // change properties for night
+			if (TimeOfDay >= 24)
+			{
+				SunRotation = 0;
+				Time = 0;
+				TimeOfDay = 1;
+				EDayNightCycle = DayNightCycleEnum::DNC_DayTime; // if it is 1 am then it is the beginning of day
+			}
+
+
 		}
-		else if (!bIsNightTime) // if day time then adjust properties for night time
+		if (EDayNightCycle == DayNightCycleEnum::DNC_DayTime) // if day time then adjust properties for night time
 		{
-			DayLighting(DayTime * DeltaTime);
-			FRotator LightRotation = { 0, (DayTime * DeltaTime), 0 };
-			DirectionalLight->AddLocalRotation(LightRotation);
-			
+
+
+
+			Time += 1;
+
+			TimeOfDay = UKismetMathLibrary::MapRangeClamped(Time, 0, (DaySpeed * 1000), 1, 12); // if reaches the max amount of seconds time of day will be 6pm
+			SunRotation = UKismetMathLibrary::MapRangeClamped(TimeOfDay, 1, 12, 0, -180); // sun will set if 6pm
+			DayLighting(Time); //change properties for day
+			if (TimeOfDay >= 12)
+			{
+
+				Time = 0;
+				TimeOfDay = 12;
+				EDayNightCycle = DayNightCycleEnum::DNC_NightTime; // if it is 6pm then it is the beg of night 
+			}
+
 		}
-		
+
+		DirectionalLight->SetWorldRotation(FRotator(SunRotation, 0, 0));
 	}
 	
-	
 }
+
+
 
 void ATimeHandler::DayLighting(float DeltaTime)
 {
@@ -93,7 +122,7 @@ void ATimeHandler::NightLighting(float DeltaTime)
 void ATimeHandler::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	DayNightCycle(DeltaTime);
+	
 
 }
 
