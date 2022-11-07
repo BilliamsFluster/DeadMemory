@@ -14,6 +14,12 @@ class DEADMEMORY_API APlayerCharacter : public ACharacter
 public:
 	
 	APlayerCharacter();
+private:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = true));
+	float BaseTurnRate;
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = true));
+	float BaseLookUpAtRate;
 
 protected:
 	
@@ -21,6 +27,12 @@ protected:
 
 	void MoveForward(float AxisValue);
 	void MoveRight(float AxisValue);
+
+	void TurnAtRate(float AxisValue);
+	void LookUpAtRate(float AxisValue);
+
+	void AddControllerYawInput(float Value);
+	void AddControllerPitchInput(float Value);
 protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Controller");

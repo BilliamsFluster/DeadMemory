@@ -3,13 +3,15 @@
 
 #include "PlayerCharacter.h"
 #include "CharacterController.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	
+	BaseTurnRate = 45.f;
+	BaseLookUpAtRate = 45.f;
 
 }
 
@@ -45,7 +47,33 @@ void APlayerCharacter::MoveRight(float AxisValue)
 		AddMovementInput(Direction, AxisValue);
 	}
 }
-
+void APlayerCharacter::TurnAtRate(float AxisValue)
+{
+	AddControllerYawInput(AxisValue * BaseTurnRate * GetWorld()->GetDeltaSeconds()); 
+	
+}
+void APlayerCharacter::LookUpAtRate(float AxisValue)
+{
+	AddControllerPitchInput(AxisValue * BaseLookUpAtRate * GetWorld()->GetDeltaSeconds());
+	
+}
+void APlayerCharacter::AddControllerYawInput(float Value)
+{
+	if (Value != 0.f && Controller && Controller->IsLocalPlayerController())
+	{
+		ACharacterController* const PC = CastChecked<ACharacterController>(Controller);
+		PC->AddYawInput(Value);
+	}
+}
+void APlayerCharacter::AddControllerPitchInput(float Value)
+{
+	if (Value != 0.f && Controller && Controller->IsLocalPlayerController())
+	{
+		ACharacterController* const PC = CastChecked<ACharacterController>(Controller);
+		PC->AddPitchInput(Value);
+		UKismetSystemLibrary::PrintString(GetWorld(), FString::SanitizeFloat(Value));
+	}
+}
 
 
 // Called every frame
@@ -67,6 +95,11 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		PlayerInputComponent->BindAxis("MoveForward", this, &APlayerCharacter::MoveForward);
 		PlayerInputComponent->BindAxis("MoveRight", this, &APlayerCharacter::MoveRight);
+
+		PlayerInputComponent->BindAxis("Turn", this, &APlayerCharacter::AddControllerYawInput);
+		PlayerInputComponent->BindAxis("LookUp", this, &APlayerCharacter::AddControllerPitchInput);
+		PlayerInputComponent->BindAxis("TurnRate", this, &APlayerCharacter::TurnAtRate);
+		PlayerInputComponent->BindAxis("LookUpRate", this, &APlayerCharacter::LookUpAtRate);
 	}
 
 }
