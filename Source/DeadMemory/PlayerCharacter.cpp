@@ -12,6 +12,7 @@ APlayerCharacter::APlayerCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	BaseTurnRate = 45.f;
 	BaseLookUpAtRate = 45.f;
+	
 
 }
 
