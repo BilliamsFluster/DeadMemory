@@ -13,6 +13,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
+#include "Components/PostProcessComponent.h"
 
 
 // Sets default values
@@ -23,6 +24,10 @@ ATimeHandler::ATimeHandler()
 	Time = 0;
 	EDayNightCycle = EDayNightCycle::DNC_DayTime;
 	DayCount = 0;
+
+	ActorOffset = CreateDefaultSubobject<USceneComponent>(TEXT("ActorLocation"));
+	ActorOffset->SetupAttachment(GetRootComponent());
+
 
 }
 
@@ -84,6 +89,7 @@ void ATimeHandler::ClockUpdate()
 		}
 
 		DirectionalLight->SetWorldRotation(FRotator(SunRotation, 0, 0));
+		
 	}
 
 
@@ -139,36 +145,46 @@ void ATimeHandler::SetWeatherCycle(EWeatherCycle Cycle)
 {
 	switch (Cycle)
 	{
-	case EWeatherCycle::WC_Raining:
-	{
-		if (RainParticles)
+		case EWeatherCycle::WC_Raining:
+		{
+			if (RainParticles)
+			{
+				if (ParticlesComponent)
+				{
+					ParticlesComponent->DestroyComponent();
+				}
+
+				ParticlesComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), RainParticles, UKismetMathLibrary::TransformLocation(FTransform(ActorOffset->GetComponentLocation()), WeatherParticleSpawnLocation));
+				ParticlesComponent->SetWorldScale3D(RainBoxExtent);
+
+			}
+
+			break;
+		}
+		case EWeatherCycle::WC_Snowing:
+		{
+			if (SnowParticles)
+			{
+				if (ParticlesComponent)
+				{
+					ParticlesComponent->DestroyComponent();
+				}
+
+				ParticlesComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SnowParticles, UKismetMathLibrary::TransformLocation(FTransform(ActorOffset->GetComponentLocation()), WeatherParticleSpawnLocation));
+				ParticlesComponent->SetWorldScale3D(SnowBoxExtent);
+
+			}
+
+			break;
+		}
+
+		case EWeatherCycle::WC_Normal:
 		{
 			if (ParticlesComponent)
 			{
 				ParticlesComponent->DestroyComponent();
 			}
-
-			ParticlesComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), RainParticles, FVector(942, -26, -125));
-
 		}
-
-		break;
-	}
-	case EWeatherCycle::WC_Snowing:
-	{
-		if (SnowParticles)
-		{
-			if (ParticlesComponent)
-			{
-				ParticlesComponent->DestroyComponent();
-			}
-
-			ParticlesComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SnowParticles, FVector(942, -26, -125));
-
-		}
-
-		break;
-	}
 	}
 
 }
