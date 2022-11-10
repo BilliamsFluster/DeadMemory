@@ -46,7 +46,13 @@ public:
 		void SetWeatherCycle(EWeatherCycle Cycle);
 
 private:
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "Offsets");
+	USceneComponent* ActorOffset;
 
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "Offsets");
+	FPostProcessSettings PostProcess;//used for weather effects
 	/*Day Night cycle properties*/
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "DayNightCycle");
@@ -89,10 +95,21 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "WeatherCycle|Particles");
 	class UNiagaraSystem* RainParticles;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "WeatherCycle|Particles");
+	FVector RainBoxExtent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "WeatherCycle|Particles");
 	UNiagaraSystem* SnowParticles;
+	
 	class UNiagaraComponent* ParticlesComponent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "WeatherCycle|Particles");
+	FVector SnowBoxExtent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), meta = (MakeEditWidget = true), Category = "WeatherCycle|Particles");
+	FVector WeatherParticleSpawnLocation;
+
+	
 
 
 
