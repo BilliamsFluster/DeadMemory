@@ -14,6 +14,9 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "Components/PostProcessComponent.h"
+#include "Kismet/KismetMaterialLibrary.h"
+#include "Curves/CurveLinearColor.h"
+
 
 
 // Sets default values
@@ -27,6 +30,7 @@ ATimeHandler::ATimeHandler()
 
 	ActorOffset = CreateDefaultSubobject<USceneComponent>(TEXT("ActorLocation"));
 	ActorOffset->SetupAttachment(GetRootComponent());
+	
 
 
 }
@@ -40,6 +44,17 @@ void ATimeHandler::BeginPlay()
 	GetWorldTimerManager().SetTimer(Clock, this, &ATimeHandler::ClockUpdate, .001, true); //every thousanth of a sec
 	SetWeatherCycle(WeatherCycle);
 
+	FOnTimelineFloat UpdateValue;
+	FOnTimelineLinearColorStatic ColorUpdateValue;
+	UpdateValue.BindUFunction(this, FName("WeatherTimerUpdate")); // binding our function to the update of the timeline
+
+	FOnTimelineEvent FinishedEvent;
+	FinishedEvent.BindUFunction(this, FName("WeatherTimerFinished")); // binding the finished function to the timeline
+	WeatherTimeLine.AddInterpFloat(RainFogCurve, UpdateValue);
+	WeatherTimeLine.AddInterpLinearColor(RainFog1Color, ColorUpdateValue);
+	WeatherTimeLine.AddInterpLinearColor(RainFog2Color, ColorUpdateValue);
+	WeatherTimeLine.AddInterpLinearColor(RainFog3Color, ColorUpdateValue);
+
 }
 void ATimeHandler::ClockUpdate()
 {
@@ -48,6 +63,7 @@ void ATimeHandler::ClockUpdate()
 
 	if (DirectionalLight != nullptr) // Is directional light valid
 	{
+		
 		if (EDayNightCycle == EDayNightCycle::DNC_NightTime) // if night time then adjust properties for night time
 		{
 
@@ -137,7 +153,7 @@ void ATimeHandler::NightLighting(float DeltaTime)
 void ATimeHandler::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	WeatherTimeLine.TickTimeline(DeltaTime);
 
 }
 
@@ -156,6 +172,7 @@ void ATimeHandler::SetWeatherCycle(EWeatherCycle Cycle)
 
 				ParticlesComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), RainParticles, UKismetMathLibrary::TransformLocation(FTransform(ActorOffset->GetComponentLocation()), WeatherParticleSpawnLocation));
 				ParticlesComponent->SetWorldScale3D(RainBoxExtent);
+				WeatherTimeLine.Play();
 
 			}
 
@@ -172,7 +189,7 @@ void ATimeHandler::SetWeatherCycle(EWeatherCycle Cycle)
 
 				ParticlesComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SnowParticles, UKismetMathLibrary::TransformLocation(FTransform(ActorOffset->GetComponentLocation()), WeatherParticleSpawnLocation));
 				ParticlesComponent->SetWorldScale3D(SnowBoxExtent);
-
+				WeatherTimeLine.Reverse();
 			}
 
 			break;
@@ -187,4 +204,29 @@ void ATimeHandler::SetWeatherCycle(EWeatherCycle Cycle)
 		}
 	}
 
+}
+
+void ATimeHandler::WeatherTimerUpdate(float Alpha)
+{
+	if (WeatherParamCollection && RainFogCurve && WeatherCycle == EWeatherCycle::WC_Raining)
+	{
+		UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), WeatherParamCollection, FName("FogOpacity"), RainFogCurve->GetFloatValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("Fog1Color"), RainFog1Color->GetLinearColorValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("Fog2Color"), RainFog2Color->GetLinearColorValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("Fog3Color"), RainFog3Color->GetLinearColorValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("GlobalFog"), RainFogGlobalColor->GetLinearColorValue(Alpha));
+		
+	}
+	if (WeatherParamCollection && RainFogCurve && WeatherCycle == EWeatherCycle::WC_Snowing)
+	{
+		UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), WeatherParamCollection, FName("FogOpacity"), SnowFogCurve->GetFloatValue(Alpha));
+
+	}
+	
+	
+	
+}
+
+void ATimeHandler::WeatherTimerFinished()
+{
 }

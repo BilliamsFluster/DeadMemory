@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/TimelineComponent.h"
 #include "TimeHandler.generated.h"
 
 UENUM(BlueprintType)
@@ -43,16 +44,16 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable, Category = "WeatherCycle")
-		void SetWeatherCycle(EWeatherCycle Cycle);
-
+	void SetWeatherCycle(EWeatherCycle Cycle);
+	
 private:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "Offsets");
 	USceneComponent* ActorOffset;
 
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "Offsets");
-	FPostProcessSettings PostProcess;//used for weather effects
+	
+
 	/*Day Night cycle properties*/
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "DayNightCycle");
@@ -109,6 +110,37 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), meta = (MakeEditWidget = true), Category = "WeatherCycle|Particles");
 	FVector WeatherParticleSpawnLocation;
 
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	class UCurveFloat* RainFogCurve; // curve for the fog intensity of rain
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	class UCurveFloat* SnowFogCurve; // curve for the Fog intensity of snow
+	
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	class UCurveLinearColor* RainFog1Color;
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	UCurveLinearColor* RainFog2Color;
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	UCurveLinearColor* RainFog3Color;
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	UCurveLinearColor* RainFogGlobalColor;
+
+	FTimeline WeatherTimeLine; // create a timeline that will affect the curves
+
+	UFUNCTION()
+	void WeatherTimerUpdate(float Alpha); // update function for the Moon timeline
+
+	UFUNCTION()
+	void WeatherTimerFinished(); // finished function for the moon timeline
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "WeatherCycle");
+	class UMaterialParameterCollection* WeatherParamCollection;
+
+	
+	
 	
 
 
