@@ -4,12 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/TimelineComponent.h"
 #include "TimeHandler.generated.h"
 
 UENUM(BlueprintType)
-enum class DayNightCycleEnum :uint8{
+enum class EDayNightCycle :uint8 {
 	DNC_DayTime   UMETA(DisplayName = "DayTime"),
 	DNC_NightTime   UMETA(DisplayName = "NightTime"),
+};
+
+UENUM(BlueprintType)
+enum class EWeatherCycle :uint8 {
+	WC_Snowing   UMETA(DisplayName = "Snowing"),
+	WC_Raining   UMETA(DisplayName = "Raining"),
+	WC_Normal	 UMETA(DisplayName = "NormalDay"),
 };
 
 
@@ -18,8 +26,8 @@ UCLASS()
 class DEADMEMORY_API ATimeHandler : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	ATimeHandler();
 
@@ -31,16 +39,28 @@ protected:
 	void DayLighting(float DeltaTime); // Function that manipulates day time effects
 	void NightLighting(float DeltaTime); // Function that manipulates night time effects
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION(BlueprintCallable, Category = "WeatherCycle")
+	void SetWeatherCycle(EWeatherCycle Cycle);
+	
 private:
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "Offsets");
+	USceneComponent* ActorOffset;
+
+	
+	
+
+	/*Day Night cycle properties*/
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "DayNightCycle");
-	DayNightCycleEnum EDayNightCycle; // enum for day or night
-	
-	
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "DayNightCycle");
+	EDayNightCycle EDayNightCycle; // enum for day or night
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "DayNightCycle");
 	float TimeOfDay; // current time of day 1 = 1am, 6 = 12pm, 18 = 6pm, 24 = 12am
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "DayNightCycle|Day Time in seconds");
@@ -49,25 +69,84 @@ private:
 	float NightSpeed; // night speed in seconds
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true));
-	class UDirectionalLightComponent* DirectionalLight; 
-	
+	class UDirectionalLightComponent* DirectionalLight;
+
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
 	class USkyAtmosphereComponent* SkyAtmosphere;
 
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
 	class ASkyLight* SkyLight;
-	
-	
+
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
 	class AMoon* Moon;
 
 	FTimerHandle Clock;
 
-	
-
 	float SunRotation;
 	float Time = 0; // value for clock
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "DayCount");
+	int DayCount;
+
+	/*Weather System Properties*/
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "WeatherCycle");
+	EWeatherCycle WeatherCycle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "WeatherCycle|Particles");
+	class UNiagaraSystem* RainParticles;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "WeatherCycle|Particles");
+	FVector RainBoxExtent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "WeatherCycle|Particles");
+	UNiagaraSystem* SnowParticles;
 	
+	class UNiagaraComponent* ParticlesComponent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "WeatherCycle|Particles");
+	FVector SnowBoxExtent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), meta = (MakeEditWidget = true), Category = "WeatherCycle|Particles");
+	FVector WeatherParticleSpawnLocation;
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	class UCurveFloat* RainFogCurve; // curve for the fog intensity of rain
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	class UCurveFloat* SnowFogCurve; // curve for the Fog intensity of snow
+	
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	class UCurveLinearColor* RainFog1Color;
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	UCurveLinearColor* RainFog2Color;
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	UCurveLinearColor* RainFog3Color;
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	UCurveLinearColor* RainFogGlobalColor;
+
+	FTimeline WeatherTimeLine; // create a timeline that will affect the curves
+
+	UFUNCTION()
+	void WeatherTimerUpdate(float Alpha); // update function for the Moon timeline
+
+	UFUNCTION()
+	void WeatherTimerFinished(); // finished function for the moon timeline
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "WeatherCycle");
+	class UMaterialParameterCollection* WeatherParamCollection;
+
+	
+	
+	
+
+
+
+
+
+
 
 };

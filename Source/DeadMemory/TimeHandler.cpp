@@ -10,15 +10,28 @@
 #include "Engine/SkyLight.h"
 #include "Moon.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
+#include "Components/PostProcessComponent.h"
+#include "Kismet/KismetMaterialLibrary.h"
+#include "Curves/CurveLinearColor.h"
+
 
 
 // Sets default values
 ATimeHandler::ATimeHandler()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	Time = 0;
-	EDayNightCycle = DayNightCycleEnum::DNC_DayTime;
+	EDayNightCycle = EDayNightCycle::DNC_DayTime;
+	DayCount = 0;
+
+	ActorOffset = CreateDefaultSubobject<USceneComponent>(TEXT("ActorLocation"));
+	ActorOffset->SetupAttachment(GetRootComponent());
+	
+
 
 }
 
@@ -27,18 +40,31 @@ void ATimeHandler::BeginPlay()
 {
 	Super::BeginPlay();
 	TimeOfDay = 0.0f;
-	DirectionalLight->SetWorldRotation(FRotator(0,-180,0));
+	DirectionalLight->SetWorldRotation(FRotator(0, -180, 0));
 	GetWorldTimerManager().SetTimer(Clock, this, &ATimeHandler::ClockUpdate, .001, true); //every thousanth of a sec
-	
+	SetWeatherCycle(WeatherCycle);
+
+	FOnTimelineFloat UpdateValue;
+	FOnTimelineLinearColorStatic ColorUpdateValue;
+	UpdateValue.BindUFunction(this, FName("WeatherTimerUpdate")); // binding our function to the update of the timeline
+
+	FOnTimelineEvent FinishedEvent;
+	FinishedEvent.BindUFunction(this, FName("WeatherTimerFinished")); // binding the finished function to the timeline
+	WeatherTimeLine.AddInterpFloat(RainFogCurve, UpdateValue);
+	WeatherTimeLine.AddInterpLinearColor(RainFog1Color, ColorUpdateValue);
+	WeatherTimeLine.AddInterpLinearColor(RainFog2Color, ColorUpdateValue);
+	WeatherTimeLine.AddInterpLinearColor(RainFog3Color, ColorUpdateValue);
+
 }
 void ATimeHandler::ClockUpdate()
 {
-	
-	
-	
+
+
+
 	if (DirectionalLight != nullptr) // Is directional light valid
 	{
-		if (EDayNightCycle == DayNightCycleEnum::DNC_NightTime) // if night time then adjust properties for night time
+		
+		if (EDayNightCycle == EDayNightCycle::DNC_NightTime) // if night time then adjust properties for night time
 		{
 
 
@@ -52,12 +78,13 @@ void ATimeHandler::ClockUpdate()
 				SunRotation = 0;
 				Time = 0;
 				TimeOfDay = 1;
-				EDayNightCycle = DayNightCycleEnum::DNC_DayTime; // if it is 1 am then it is the beginning of day
+				EDayNightCycle = EDayNightCycle::DNC_DayTime; // if it is 1 am then it is the beginning of day
+				DayCount += 1;
 			}
 
 
 		}
-		if (EDayNightCycle == DayNightCycleEnum::DNC_DayTime) // if day time then adjust properties for night time
+		if (EDayNightCycle == EDayNightCycle::DNC_DayTime) // if day time then adjust properties for night time
 		{
 
 
@@ -72,14 +99,18 @@ void ATimeHandler::ClockUpdate()
 
 				Time = 0;
 				TimeOfDay = 12;
-				EDayNightCycle = DayNightCycleEnum::DNC_NightTime; // if it is 6pm then it is the beg of night 
+				EDayNightCycle = EDayNightCycle::DNC_NightTime; // if it is 6pm then it is the beg of night 
 			}
 
 		}
 
 		DirectionalLight->SetWorldRotation(FRotator(SunRotation, 0, 0));
+		
 	}
-	
+
+
+
+
 }
 
 
@@ -88,23 +119,23 @@ void ATimeHandler::DayLighting(float DeltaTime)
 {
 	if (SkyLight != nullptr && Moon != nullptr) // if the moon and the sky light are valid
 	{ // we want to adjust properties to create a realistic day scene
-		
+
 		float DirectionalLightIntensity = DirectionalLight->Intensity;
 		float SkyLightIntensity = SkyLight->GetLightComponent()->Intensity;
 
 		DirectionalLight->SetIntensity(UKismetMathLibrary::FInterpTo(DirectionalLightIntensity, 10.0, DeltaTime, 4.0f));
 		SkyLight->GetLightComponent()->SetIntensity(UKismetMathLibrary::FInterpTo(SkyLightIntensity, 1, DeltaTime / 4, 8.0f));
-		
+
 		Moon->MoonDayTransition();
 	}
-	
+
 
 }
 void ATimeHandler::NightLighting(float DeltaTime)
 {
 	if (SkyLight != nullptr && Moon != nullptr)// if the moon and the sky light are valid
 	{
-		
+
 		//we want to adjust properties to create a realistic night scene
 		float DirectionalLightIntensity = DirectionalLight->Intensity;
 		float SkyLightIntensity = SkyLight->GetLightComponent()->Intensity;
@@ -114,15 +145,88 @@ void ATimeHandler::NightLighting(float DeltaTime)
 
 		Moon->MoonNightTransition();
 	}
-	
-	
+
+
 }
 
 // Called every frame
 void ATimeHandler::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+	WeatherTimeLine.TickTimeline(DeltaTime);
 
 }
 
+void ATimeHandler::SetWeatherCycle(EWeatherCycle Cycle)
+{
+	switch (Cycle)
+	{
+		case EWeatherCycle::WC_Raining:
+		{
+			if (RainParticles)
+			{
+				if (ParticlesComponent)
+				{
+					ParticlesComponent->DestroyComponent();
+				}
+
+				ParticlesComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), RainParticles, UKismetMathLibrary::TransformLocation(FTransform(ActorOffset->GetComponentLocation()), WeatherParticleSpawnLocation));
+				ParticlesComponent->SetWorldScale3D(RainBoxExtent);
+				WeatherTimeLine.Play();
+
+			}
+
+			break;
+		}
+		case EWeatherCycle::WC_Snowing:
+		{
+			if (SnowParticles)
+			{
+				if (ParticlesComponent)
+				{
+					ParticlesComponent->DestroyComponent();
+				}
+
+				ParticlesComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SnowParticles, UKismetMathLibrary::TransformLocation(FTransform(ActorOffset->GetComponentLocation()), WeatherParticleSpawnLocation));
+				ParticlesComponent->SetWorldScale3D(SnowBoxExtent);
+				WeatherTimeLine.Reverse();
+			}
+
+			break;
+		}
+
+		case EWeatherCycle::WC_Normal:
+		{
+			if (ParticlesComponent)
+			{
+				ParticlesComponent->DestroyComponent();
+			}
+		}
+	}
+
+}
+
+void ATimeHandler::WeatherTimerUpdate(float Alpha)
+{
+	if (WeatherParamCollection && RainFogCurve && WeatherCycle == EWeatherCycle::WC_Raining)
+	{
+		UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), WeatherParamCollection, FName("FogOpacity"), RainFogCurve->GetFloatValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("Fog1Color"), RainFog1Color->GetLinearColorValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("Fog2Color"), RainFog2Color->GetLinearColorValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("Fog3Color"), RainFog3Color->GetLinearColorValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("GlobalFog"), RainFogGlobalColor->GetLinearColorValue(Alpha));
+		
+	}
+	if (WeatherParamCollection && RainFogCurve && WeatherCycle == EWeatherCycle::WC_Snowing)
+	{
+		UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), WeatherParamCollection, FName("FogOpacity"), SnowFogCurve->GetFloatValue(Alpha));
+
+	}
+	
+	
+	
+}
+
+void ATimeHandler::WeatherTimerFinished()
+{
+}
