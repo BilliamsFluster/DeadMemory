@@ -45,6 +45,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "WeatherCycle")
 	void SetWeatherCycle(EWeatherCycle Cycle);
+
+	void PlayWeatherTimeline();
 	
 private:
 	
@@ -110,23 +112,62 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), meta = (MakeEditWidget = true), Category = "WeatherCycle|Particles");
 	FVector WeatherParticleSpawnLocation;
 
-	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|RainCurves")
 	class UCurveFloat* RainFogCurve; // curve for the fog intensity of rain
 
-	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
-	class UCurveFloat* SnowFogCurve; // curve for the Fog intensity of snow
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|SnowCurves")
+	 UCurveFloat* SnowFogCurve; // curve for the Fog intensity of snow
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|NormalDayCurves")
+	float NormalDayTransitionTime = 0.f;
 	
-	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|SnowCurves")
+	float SnowDayTransitionTime = 0.f;
+	
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|RainCurves")
+	float RainDayTransitionTime = 0.f;
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|NormalDayCurves")
+	UCurveFloat* NormalFogCurve; // curve for the Fog intensity of snow
+	
+	/*Rain Fog Curves*/
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|RainCurves")
 	class UCurveLinearColor* RainFog1Color;
 
-	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|RainCurves")
 	UCurveLinearColor* RainFog2Color;
 
-	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|RainCurves")
 	UCurveLinearColor* RainFog3Color;
 
-	UPROPERTY(EditAnywhere, Category = "WeatherCycle|Curves")
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|RainCurves")
 	UCurveLinearColor* RainFogGlobalColor;
+
+	/*Snow Fog Curves*/
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|SnowCurves")
+	UCurveLinearColor* SnowFog1Color;
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|SnowCurves")
+	UCurveLinearColor* SnowFog2Color;
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|SnowCurves")
+	UCurveLinearColor* SnowFog3Color;
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|SnowCurves")
+	UCurveLinearColor* SnowFogGlobalColor;
+
+	/*Normal Fog Curves*/
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|NormalDayCurves")
+	UCurveLinearColor* NormalFog1Color;
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|NormalDayCurves")
+	UCurveLinearColor* NormalFog2Color;
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|NormalDayCurves")
+	UCurveLinearColor* NormalFog3Color;
+
+	UPROPERTY(EditAnywhere, Category = "WeatherCycle|NormalDayCurves")
+	UCurveLinearColor* NormalFogGlobalColor;
 
 	FTimeline WeatherTimeLine; // create a timeline that will affect the curves
 
