@@ -60,6 +60,12 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "DayNightCycle");
 	EDayNightCycle EDayNightCycle; // enum for day or night
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "DayNightCycle|LightIntensity");
+	float DayLightIntensity = 1.0f; // sets light intensity for the Day
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "DayNightCycle|LightIntensity");
+	float NightLightIntensity = 0.1f; // sets light intensity for the night
 
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "DayNightCycle");
@@ -71,7 +77,7 @@ private:
 	float NightSpeed; // night speed in seconds
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true));
-	class UDirectionalLightComponent* DirectionalLight;
+	class UDirectionalLightComponent* DirectionalLight; // sun light
 
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true));
 	class USkyAtmosphereComponent* SkyAtmosphere;
@@ -84,22 +90,22 @@ private:
 
 	FTimerHandle Clock;
 
-	float SunRotation;
+	float SunRotation; // keeps track of sun's rotation 
 	float Time = 0; // value for clock
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "DayCount");
-	int DayCount;
+	int DayCount;// keeps track of how many days have past since the start
 
 	/*Weather System Properties*/
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "WeatherCycle");
-	EWeatherCycle WeatherCycle;
+	EWeatherCycle WeatherCycle; // handles weather conditions 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "WeatherCycle|Particles");
-	class UNiagaraSystem* RainParticles;
+	class UNiagaraSystem* RainParticles; // particle system for rain
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "WeatherCycle|Particles");
-	FVector RainBoxExtent;
+	FVector RainBoxExtent; // sets how large the rain particles should 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true), Category = "WeatherCycle|Particles");
 	UNiagaraSystem* SnowParticles;
@@ -118,6 +124,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "WeatherCycle|SnowCurves")
 	 UCurveFloat* SnowFogCurve; // curve for the Fog intensity of snow
 
+	/*handles transitions for each weather cycle*/
 	UPROPERTY(EditAnywhere, Category = "WeatherCycle|NormalDayCurves")
 	float NormalDayTransitionTime = 0.f;
 	
@@ -178,7 +185,7 @@ private:
 	void WeatherTimerFinished(); // finished function for the moon timeline
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true), Category = "WeatherCycle");
-	class UMaterialParameterCollection* WeatherParamCollection;
+	class UMaterialParameterCollection* WeatherParamCollection; // handles adjustments to the fog material
 
 	
 	
