@@ -140,7 +140,7 @@ void ATimeHandler::DayLighting(float DeltaTime)
 		float DirectionalLightIntensity = DirectionalLight->Intensity;
 		float SkyLightIntensity = SkyLight->GetLightComponent()->Intensity;
 
-		DirectionalLight->SetIntensity(UKismetMathLibrary::FInterpTo(DirectionalLightIntensity, 10.0, DeltaTime, 4.0f));
+		DirectionalLight->SetIntensity(UKismetMathLibrary::FInterpTo(DirectionalLightIntensity, DayLightIntensity, DeltaTime, 4.0f));
 		SkyLight->GetLightComponent()->SetIntensity(UKismetMathLibrary::FInterpTo(SkyLightIntensity, 1, DeltaTime / 4, 8.0f));
 
 		Moon->MoonDayTransition();
@@ -157,7 +157,7 @@ void ATimeHandler::NightLighting(float DeltaTime)
 		float DirectionalLightIntensity = DirectionalLight->Intensity;
 		float SkyLightIntensity = SkyLight->GetLightComponent()->Intensity;
 
-		DirectionalLight->SetIntensity(UKismetMathLibrary::FInterpTo(DirectionalLightIntensity, 0.1, DeltaTime, 3.0f));
+		DirectionalLight->SetIntensity(UKismetMathLibrary::FInterpTo(DirectionalLightIntensity, NightLightIntensity, DeltaTime, 3.0f));
 		SkyLight->GetLightComponent()->SetIntensity(UKismetMathLibrary::FInterpTo(SkyLightIntensity, 0.01, DeltaTime / 4, 5.0f));
 
 		Moon->MoonNightTransition();
@@ -176,25 +176,26 @@ void ATimeHandler::Tick(float DeltaTime)
 
 void ATimeHandler::SetWeatherCycle(EWeatherCycle Cycle)
 {
-	switch (Cycle)
+	WeatherCycle = Cycle;
+	switch (WeatherCycle)
 	{
 		case EWeatherCycle::WC_Raining:
 		{
 			if (RainParticles)
 			{
-				if (ParticlesComponent)
+				if (ParticlesComponent)// the particles component manages what spawns, instead of creating 3 we destroy it and reuse it
 				{
 					ParticlesComponent->DestroyComponent();
 				}
-
+				/*Spawn Rain particles at that specific location and scale*/
 				ParticlesComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), RainParticles, UKismetMathLibrary::TransformLocation(FTransform(ActorOffset->GetComponentLocation()), WeatherParticleSpawnLocation));
 				ParticlesComponent->SetWorldScale3D(RainBoxExtent);
 				
 				
 				
-				WeatherTimeLine.Reverse();
+				WeatherTimeLine.Reverse(); // reverses the previous timeline curve for weather
 				FTimerHandle WeatherTransition;
-				GetWorldTimerManager().SetTimer(WeatherTransition, this, &ATimeHandler::PlayWeatherTimeline, NormalDayTransitionTime, false);
+				GetWorldTimerManager().SetTimer(WeatherTransition, this, &ATimeHandler::PlayWeatherTimeline, RainDayTransitionTime, false);
 				
 
 			}
@@ -207,17 +208,17 @@ void ATimeHandler::SetWeatherCycle(EWeatherCycle Cycle)
 		{
 			if (SnowParticles)
 			{
-				if (ParticlesComponent)
+				if (ParticlesComponent)// the particles component manages what spawns, instead of creating 3 we destroy it and reuse it
 				{
 					ParticlesComponent->DestroyComponent();
 				}
-
+				/*Spawn Snow particles at that specific location and scale*/
 				ParticlesComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SnowParticles, UKismetMathLibrary::TransformLocation(FTransform(ActorOffset->GetComponentLocation()), WeatherParticleSpawnLocation));
 				ParticlesComponent->SetWorldScale3D(SnowBoxExtent);
 				
-				WeatherTimeLine.Reverse();
+				WeatherTimeLine.Reverse();// reverses the previous timeline curve for weather
 				FTimerHandle WeatherTransition;
-				GetWorldTimerManager().SetTimer(WeatherTransition, this, &ATimeHandler::PlayWeatherTimeline, NormalDayTransitionTime, false);
+				GetWorldTimerManager().SetTimer(WeatherTransition, this, &ATimeHandler::PlayWeatherTimeline, SnowDayTransitionTime, false);
 			}
 			
 
@@ -226,13 +227,14 @@ void ATimeHandler::SetWeatherCycle(EWeatherCycle Cycle)
 
 		case EWeatherCycle::WC_Normal:
 		{
-			if (ParticlesComponent)
+			
+			if (ParticlesComponent)// the particles component manages what spawns, instead of creating 3 we destroy it and reuse it
 			{
 				
 				ParticlesComponent->DestroyComponent();
 
 			}
-			WeatherTimeLine.Reverse();
+			WeatherTimeLine.Reverse();// reverses the previous timeline curve for weather
 			FTimerHandle WeatherTransition;
 			GetWorldTimerManager().SetTimer(WeatherTransition, this, &ATimeHandler::PlayWeatherTimeline, NormalDayTransitionTime, false); 
 
@@ -258,7 +260,7 @@ void ATimeHandler::WeatherTimerUpdate(float Alpha)
 		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("GlobalFog"), RainFogGlobalColor->GetLinearColorValue(Alpha));
 		
 	}
-	if (WeatherParamCollection && RainFogCurve && WeatherCycle == EWeatherCycle::WC_Snowing) // set conditions for snowing day
+	if (WeatherParamCollection && SnowFogCurve && WeatherCycle == EWeatherCycle::WC_Snowing) // set conditions for snowing day
 	{
 	
 		UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), WeatherParamCollection, FName("FogOpacity"), SnowFogCurve->GetFloatValue(Alpha));
@@ -269,7 +271,7 @@ void ATimeHandler::WeatherTimerUpdate(float Alpha)
 
 	}
 
-	if (WeatherParamCollection && RainFogCurve && WeatherCycle == EWeatherCycle::WC_Normal) // set conditions for normal day
+	if (WeatherParamCollection && NormalFogCurve && WeatherCycle == EWeatherCycle::WC_Normal) // set conditions for normal day
 	{
 		
 		UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), WeatherParamCollection, FName("FogOpacity"), NormalFogCurve->GetFloatValue(Alpha));
