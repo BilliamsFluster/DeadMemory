@@ -50,10 +50,27 @@ void ATimeHandler::BeginPlay()
 
 	FOnTimelineEvent FinishedEvent;
 	FinishedEvent.BindUFunction(this, FName("WeatherTimerFinished")); // binding the finished function to the timeline
+	
+	/*Add rain curves to timeline*/
 	WeatherTimeLine.AddInterpFloat(RainFogCurve, UpdateValue);
 	WeatherTimeLine.AddInterpLinearColor(RainFog1Color, ColorUpdateValue);
 	WeatherTimeLine.AddInterpLinearColor(RainFog2Color, ColorUpdateValue);
 	WeatherTimeLine.AddInterpLinearColor(RainFog3Color, ColorUpdateValue);
+	WeatherTimeLine.AddInterpLinearColor(RainFogGlobalColor, ColorUpdateValue);
+	
+	/*Add snow curves to timeline*/
+	WeatherTimeLine.AddInterpFloat(SnowFogCurve, UpdateValue);
+	WeatherTimeLine.AddInterpLinearColor(SnowFog1Color, ColorUpdateValue);
+	WeatherTimeLine.AddInterpLinearColor(SnowFog2Color, ColorUpdateValue);
+	WeatherTimeLine.AddInterpLinearColor(SnowFog3Color, ColorUpdateValue);
+	WeatherTimeLine.AddInterpLinearColor(SnowFogGlobalColor, ColorUpdateValue);
+
+	/*Add Normal day conditions curves to timeline*/
+	WeatherTimeLine.AddInterpFloat(NormalFogCurve, UpdateValue);
+	WeatherTimeLine.AddInterpLinearColor(NormalFog1Color, ColorUpdateValue);
+	WeatherTimeLine.AddInterpLinearColor(NormalFog2Color, ColorUpdateValue);
+	WeatherTimeLine.AddInterpLinearColor(NormalFog3Color, ColorUpdateValue);
+	WeatherTimeLine.AddInterpLinearColor(NormalFogGlobalColor, ColorUpdateValue);
 
 }
 void ATimeHandler::ClockUpdate()
@@ -172,9 +189,17 @@ void ATimeHandler::SetWeatherCycle(EWeatherCycle Cycle)
 
 				ParticlesComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), RainParticles, UKismetMathLibrary::TransformLocation(FTransform(ActorOffset->GetComponentLocation()), WeatherParticleSpawnLocation));
 				ParticlesComponent->SetWorldScale3D(RainBoxExtent);
-				WeatherTimeLine.Play();
+				
+				
+				
+				WeatherTimeLine.Reverse();
+				FTimerHandle WeatherTransition;
+				GetWorldTimerManager().SetTimer(WeatherTransition, this, &ATimeHandler::PlayWeatherTimeline, NormalDayTransitionTime, false);
+				
 
 			}
+
+			
 
 			break;
 		}
@@ -189,8 +214,12 @@ void ATimeHandler::SetWeatherCycle(EWeatherCycle Cycle)
 
 				ParticlesComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SnowParticles, UKismetMathLibrary::TransformLocation(FTransform(ActorOffset->GetComponentLocation()), WeatherParticleSpawnLocation));
 				ParticlesComponent->SetWorldScale3D(SnowBoxExtent);
+				
 				WeatherTimeLine.Reverse();
+				FTimerHandle WeatherTransition;
+				GetWorldTimerManager().SetTimer(WeatherTransition, this, &ATimeHandler::PlayWeatherTimeline, NormalDayTransitionTime, false);
 			}
+			
 
 			break;
 		}
@@ -199,16 +228,28 @@ void ATimeHandler::SetWeatherCycle(EWeatherCycle Cycle)
 		{
 			if (ParticlesComponent)
 			{
+				
 				ParticlesComponent->DestroyComponent();
+
 			}
+			WeatherTimeLine.Reverse();
+			FTimerHandle WeatherTransition;
+			GetWorldTimerManager().SetTimer(WeatherTransition, this, &ATimeHandler::PlayWeatherTimeline, NormalDayTransitionTime, false); 
+
+			
 		}
 	}
 
 }
 
+void ATimeHandler::PlayWeatherTimeline()
+{
+	WeatherTimeLine.PlayFromStart();
+}
+
 void ATimeHandler::WeatherTimerUpdate(float Alpha)
 {
-	if (WeatherParamCollection && RainFogCurve && WeatherCycle == EWeatherCycle::WC_Raining)
+	if (WeatherParamCollection && RainFogCurve && WeatherCycle == EWeatherCycle::WC_Raining) // set conditions for raining day
 	{
 		UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), WeatherParamCollection, FName("FogOpacity"), RainFogCurve->GetFloatValue(Alpha));
 		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("Fog1Color"), RainFog1Color->GetLinearColorValue(Alpha));
@@ -217,11 +258,28 @@ void ATimeHandler::WeatherTimerUpdate(float Alpha)
 		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("GlobalFog"), RainFogGlobalColor->GetLinearColorValue(Alpha));
 		
 	}
-	if (WeatherParamCollection && RainFogCurve && WeatherCycle == EWeatherCycle::WC_Snowing)
+	if (WeatherParamCollection && RainFogCurve && WeatherCycle == EWeatherCycle::WC_Snowing) // set conditions for snowing day
 	{
+	
 		UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), WeatherParamCollection, FName("FogOpacity"), SnowFogCurve->GetFloatValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("Fog1Color"), SnowFog1Color->GetLinearColorValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("Fog2Color"), SnowFog2Color->GetLinearColorValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("Fog3Color"), SnowFog3Color->GetLinearColorValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("GlobalFog"), SnowFogGlobalColor->GetLinearColorValue(Alpha));
 
 	}
+
+	if (WeatherParamCollection && RainFogCurve && WeatherCycle == EWeatherCycle::WC_Normal) // set conditions for normal day
+	{
+		
+		UKismetMaterialLibrary::SetScalarParameterValue(GetWorld(), WeatherParamCollection, FName("FogOpacity"), NormalFogCurve->GetFloatValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("Fog1Color"), NormalFog1Color->GetLinearColorValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("Fog2Color"), NormalFog2Color->GetLinearColorValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("Fog3Color"), NormalFog3Color->GetLinearColorValue(Alpha));
+		UKismetMaterialLibrary::SetVectorParameterValue(GetWorld(), WeatherParamCollection, FName("GlobalFog"), NormalFogGlobalColor->GetLinearColorValue(Alpha));
+
+	}
+
 	
 	
 	
