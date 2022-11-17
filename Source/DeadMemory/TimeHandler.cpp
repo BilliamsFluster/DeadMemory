@@ -88,7 +88,7 @@ void ATimeHandler::ClockUpdate()
 
 			Time += 1;
 			TimeOfDay = UKismetMathLibrary::MapRangeClamped(Time, 0, (NightSpeed * 1000), 12, 24); // if reaches the max amount of seconds time of day will be 1am
-			SunRotation = UKismetMathLibrary::MapRangeClamped(TimeOfDay, 12, 24, -180, -360); // get value of time of day and if it is 24 then the sun orientation will change to be rotating to 360 deg
+			SunRotation = UKismetMathLibrary::MapRangeClamped(TimeOfDay, 12, 24, -450, -630); // get value of time of day and if it is 24 then the sun orientation will change to be rotating to 360 deg
 			NightLighting(Time); // change properties for night
 			if (TimeOfDay >= 24)
 			{
@@ -109,7 +109,7 @@ void ATimeHandler::ClockUpdate()
 			Time += 1;
 
 			TimeOfDay = UKismetMathLibrary::MapRangeClamped(Time, 0, (DaySpeed * 1000), 1, 12); // if reaches the max amount of seconds time of day will be 6pm
-			SunRotation = UKismetMathLibrary::MapRangeClamped(TimeOfDay, 1, 12, 0, -180); // sun will set if 6pm
+			SunRotation = UKismetMathLibrary::MapRangeClamped(TimeOfDay, 1, 12, -270, -450); // sun will set if 6pm
 			DayLighting(Time); //change properties for day
 			if (TimeOfDay >= 12)
 			{

@@ -4,6 +4,9 @@
 #include "PlayerCharacter.h"
 #include "CharacterController.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
+
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -12,8 +15,15 @@ APlayerCharacter::APlayerCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	BaseTurnRate = 45.f;
 	BaseLookUpAtRate = 45.f;
-	
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom")); // create cameraboom
+	CameraBoom->SetupAttachment(RootComponent); // attaches cameraboom to root comp
 
+	CameraBoom->TargetArmLength = 0.f; // follows this distance behind character
+	CameraBoom->bUsePawnControlRotation = true; // rotate the arm based on the controller
+	
+	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	FollowCamera->SetupAttachment(CameraBoom,USpringArmComponent::SocketName);
+	FollowCamera->bUsePawnControlRotation = false; // camera does not need to rotate relative to arm
 }
 
 // Called when the game starts or when spawned

@@ -14,13 +14,24 @@ class DEADMEMORY_API APlayerCharacter : public ACharacter
 public:
 	
 	APlayerCharacter();
+	
+	
 private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = true));
 	float BaseTurnRate;
 	UPROPERTY(VisibleAnywhere,BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = true));
 	float BaseLookUpAtRate;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = true))
+	class USpringArmComponent* CameraBoom; // cameraboom for ataching camera to player
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = true))
+	class UCameraComponent* FollowCamera; // camera that follows the player
+
+public:
+	FORCEINLINE  USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+	FORCEINLINE  UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 protected:
 	
 	virtual void BeginPlay() override;
